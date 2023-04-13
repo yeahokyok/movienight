@@ -325,4 +325,7 @@ tags
 *.sqlite
 *.sqlite3
 
+#VSCode 
+.vscode
+
 .note.md
