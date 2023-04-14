@@ -13,7 +13,6 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_object(self):
         movie_obj = super().get_object()
-        print(movie_obj)
         return fill_movie_details(movie_obj)
 
     @action(methods=["get"], detail=False)

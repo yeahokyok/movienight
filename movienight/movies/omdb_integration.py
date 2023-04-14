@@ -26,7 +26,7 @@ def fill_movie_details(movie):
             "'%s' is already a full record.",
             movie.title,
         )
-        return
+        return movie
     omdb_client = get_client_from_settings()
     movie_details = omdb_client.get_by_imdb_id(movie.imdb_id)
     movie.title = movie_details.title
