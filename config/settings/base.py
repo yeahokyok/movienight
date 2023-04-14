@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party apps
+    "rest_framework",
     # Local apps
     "movienight.movies.apps.MoviesConfig",
 ]
@@ -125,4 +127,4 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-OMDB_KEY = env.bool("OMDB_KEY")
+OMDB_KEY = env.str("OMDB_KEY")

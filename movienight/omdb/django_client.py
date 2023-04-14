@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from omdb.client import OmdbClient
+from .client import OmdbClient
 
 
 def get_client_from_settings():
