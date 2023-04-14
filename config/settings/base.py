@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     # Third-party apps
     "rest_framework",
     # Local apps
+    "movienight.accounts.apps.AccountsConfig",  # custom users app
     "movienight.movies.apps.MoviesConfig",
 ]
 
@@ -102,6 +103,8 @@ AUTH_PASSWORD_VALIDATORS = [
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
+
+AUTH_USER_MODEL = "accounts.User"
 
 
 # Internationalization
