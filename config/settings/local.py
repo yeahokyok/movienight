@@ -1,3 +1,4 @@
+import sys
 from .base import *  # noqa
 from .base import env
 
@@ -31,3 +32,6 @@ LOGGING = {
         "level": "DEBUG",
     },
 }
+
+if "test" in sys.argv or "test_coverage" in sys.argv:
+    LOGGING = {}
