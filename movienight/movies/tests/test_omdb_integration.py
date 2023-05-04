@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from django.test import TestCase
 
 from ..models import Genre
@@ -58,3 +58,49 @@ class TestFillMovieDetails(TestCase):
         fill_movie_details(full_record_movie)
 
         mock_get_client_from_settings.assert_not_called()
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_fill_movie_details_return_movie(self, mock_get_client_from_settings):
+        movie = MovieFactory.create(is_full_record=False)
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.get_by_imdb_id.return_value = MagicMock(
+            title="The Matrix",
+            year=1999,
+            plot="just a test movie",
+            runtime_minutes=120,
+            genres=["Action", "Sci-Fi"],
+        )
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        returned_movie = fill_movie_details(movie)
+
+        self.assertEqual(returned_movie.is_full_record, True)
+        self.assertEqual(returned_movie.title, "The Matrix")
+        self.assertEqual(returned_movie.year, 1999)
+        self.assertEqual(returned_movie.plot, "just a test movie")
+        self.assertEqual(returned_movie.runtime_minutes, 120)
+        for genre in returned_movie.genres.all():
+            self.assertIn(genre.name, ["Action", "Sci-Fi"])
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_fill_movie_details_save_movie_in_db(self, mock_get_client_from_settings):
+        movie = MovieFactory.create(is_full_record=False)
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.get_by_imdb_id.return_value = MagicMock(
+            title="The Matrix",
+            year=1999,
+            plot="just a test movie",
+            runtime_minutes=120,
+            genres=["Action", "Sci-Fi"],
+        )
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        fill_movie_details(movie)
+
+        self.assertEqual(movie.is_full_record, True)
+        self.assertEqual(movie.title, "The Matrix")
+        self.assertEqual(movie.year, 1999)
+        self.assertEqual(movie.plot, "just a test movie")
+        self.assertEqual(movie.runtime_minutes, 120)
+        for genre in movie.genres.all():
+            self.assertIn(genre.name, ["Action", "Sci-Fi"])
