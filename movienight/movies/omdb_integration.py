@@ -38,6 +38,7 @@ def fill_movie_details(movie):
         movie.genres.add(genre)
     movie.is_full_record = True
     movie.save()
+    return movie
 
 
 def search_and_save(search):

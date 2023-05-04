@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -18,10 +18,8 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
     @action(methods=["get"], detail=False)
     def search(self, request):
         search_serializer = MovieSearchSerializer(data=request.GET)
-
         if not search_serializer.is_valid():
-            return Response(search_serializer.errors)
-
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         term = search_serializer.data["term"]
 
         search_and_save(term)

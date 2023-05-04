@@ -1,11 +1,9 @@
-import pytest
-
+from django.test import TestCase
 from ..models import Movie
 from .factories import MovieFactory, GenreFactory
 
 
-@pytest.mark.django_db
-class TestMovieModel:
+class TestMovieModel(TestCase):
     def test_movie_model_str_method(self):
         movie = MovieFactory(
             title="The Matrix",
@@ -16,15 +14,15 @@ class TestMovieModel:
             is_full_record=True,
         )
         movie.genres.add(GenreFactory(name="Action"))
-        assert str(movie) == "The Matrix (1999)"
+        self.assertEqual(str(movie), "The Matrix (1999)")
 
     def test_movie_model_genre_relationship(self):
         movie = MovieFactory()
         movie.genres.add(GenreFactory(name="Action"))
         movie.genres.add(GenreFactory(name="Sci-Fi"))
-        assert movie.genres.count() == 2
-        assert movie.genres.first().name == "Action"
-        assert movie.genres.last().name == "Sci-Fi"
+        self.assertEqual(movie.genres.count(), 2)
+        self.assertEqual(movie.genres.first().name, "Action")
+        self.assertEqual(movie.genres.last().name, "Sci-Fi")
 
     def test_movie_model_default_ordering(self):
         movie1 = MovieFactory(
@@ -42,6 +40,6 @@ class TestMovieModel:
             is_full_record=True,
         )
         movies = list(Movie.objects.all())
-        assert len(movies) == 2
-        assert movies[0] == movie1
-        assert movies[1] == movie2
+        self.assertEqual(len(movies), 2)
+        self.assertEqual(movies[0], movie1)
+        self.assertEqual(movies[1], movie2)
