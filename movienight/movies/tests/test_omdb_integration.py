@@ -1,7 +1,9 @@
+from unittest.mock import patch
 from django.test import TestCase
 
 from ..models import Genre
-from ..omdb_integration import get_or_create_genres
+from ..omdb_integration import get_or_create_genres, fill_movie_details
+from .factories import MovieFactory
 
 
 class TestGetOrCreateGenres(TestCase):
@@ -46,3 +48,13 @@ class TestGetOrCreateGenres(TestCase):
         for genre in genres:
             self.assertTrue(Genre.objects.filter(pk=genre.pk).exists())
             self.assertIn(genre.name, genre_names)
+
+
+class TestFillMovieDetails(TestCase):
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_no_fetch_for_full_record_movie(self, mock_get_client_from_settings):
+        full_record_movie = MovieFactory.create(is_full_record=True)
+
+        fill_movie_details(full_record_movie)
+
+        mock_get_client_from_settings.assert_not_called()
