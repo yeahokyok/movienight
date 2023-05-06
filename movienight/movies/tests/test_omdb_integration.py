@@ -148,3 +148,15 @@ class TestSearchAndSave(TestCase):
         search_term.refresh_from_db()
 
         self.assertNotEqual(search_term.last_search, original_last_search)
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_skip_search_if_searched_recently_within_24_hours(
+        self, mock_get_client_from_settings
+    ):
+        search_term = SearchTerm.objects.create(
+            term="test search term", last_search=timezone.now()
+        )
+
+        search_and_save(search_term.term)
+
+        mock_get_client_from_settings.assert_not_called()
