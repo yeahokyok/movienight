@@ -138,7 +138,7 @@ class TestSearchAndSave(TestCase):
 
         search_and_save(search_term.term)
 
-        # ensure the last_search was updated
+        # refresh from db to get last_search from db
         search_term.refresh_from_db()
 
         self.assertGreater(search_term.last_search, original_last_search)
