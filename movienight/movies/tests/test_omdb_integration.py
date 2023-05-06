@@ -126,6 +126,17 @@ class TestSearchAndSave(TestCase):
         omdb_client_mock.search.assert_called_once_with(expected_normalized_search_term)
 
     @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_save_search_term(self, mock_get_client_from_settings):
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.search.return_value = []
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        search_term = "new search term"
+        search_and_save(search_term)
+
+        self.assertTrue(SearchTerm.objects.filter(term=search_term).exists())
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
     @patch("movienight.movies.omdb_integration.now")
     def test_update_search_term_last_searched(
         self, mock_now, mock_get_client_from_settings
@@ -160,3 +171,22 @@ class TestSearchAndSave(TestCase):
         search_and_save(search_term.term)
 
         mock_get_client_from_settings.assert_not_called()
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_save_search_results(self, mock_get_client_from_settings):
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.search.return_value = [
+            MagicMock(title="Test Movie 1", imdb_id="tt1111111", year=2020),
+            MagicMock(title="Test Movie 2", imdb_id="tt2222222", year=2021),
+        ]
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        search_and_save("test")
+
+        mock_get_client_from_settings.assert_called_once()
+        self.assertEqual(Movie.objects.count(), 2)
+
+        movie1 = Movie.objects.get(imdb_id="tt1111111")
+        movie2 = Movie.objects.get(imdb_id="tt2222222")
+        self.assertFalse(movie1.is_full_record)
+        self.assertFalse(movie2.is_full_record)
