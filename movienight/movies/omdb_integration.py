@@ -51,10 +51,6 @@ def search_and_save(search):
 
     search_term, created = SearchTerm.objects.get_or_create(term=normalized_search_term)
 
-    # Add this line to update the last_search field
-    search_term.last_search = now()
-    search_term.save()
-
     if not created and (search_term.last_search > now() - timedelta(days=1)):
         # Don't search as it has been searched recently
         logger.warning(
@@ -62,6 +58,10 @@ def search_and_save(search):
             normalized_search_term,
         )
         return
+
+    # Add this line to update the last_search field
+    search_term.last_search = now()
+    search_term.save()
 
     omdb_client = get_client_from_settings()
 

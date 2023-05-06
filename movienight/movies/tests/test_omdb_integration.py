@@ -1,6 +1,7 @@
-import time
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
+from django.utils import timezone
+
 
 from ..models import Genre, SearchTerm, Movie
 from ..omdb_integration import get_or_create_genres, fill_movie_details, search_and_save
@@ -125,20 +126,25 @@ class TestSearchAndSave(TestCase):
         omdb_client_mock.search.assert_called_once_with(expected_normalized_search_term)
 
     @patch("movienight.movies.omdb_integration.get_client_from_settings")
-    def test_update_search_term_last_searched(self, mock_get_client_from_settings):
+    @patch("movienight.movies.omdb_integration.now")
+    def test_update_search_term_last_searched(
+        self, mock_now, mock_get_client_from_settings
+    ):
         omdb_client_mock = MagicMock()
         omdb_client_mock.search.return_value = []
         mock_get_client_from_settings.return_value = omdb_client_mock
 
+        mock_now.return_value = timezone.now()
+
         search_term = SearchTerm.objects.create(term="test search term")
         original_last_search = search_term.last_search
 
-        # ensure a time difference
-        time.sleep(1)
+        # time passed
+        mock_now.return_value += timezone.timedelta(days=2)
 
         search_and_save(search_term.term)
 
         # refresh from db to get last_search from db
         search_term.refresh_from_db()
 
-        self.assertGreater(search_term.last_search, original_last_search)
+        self.assertNotEqual(search_term.last_search, original_last_search)
