@@ -47,9 +47,13 @@ def search_and_save(search):
     each result to the local DB as a partial record.
     """
     # Replace multiple spaces with single spaces, and lowercase the search
-    normalized_search_term = re.sub(r"\s+", " ", search.lower())
+    normalized_search_term = re.sub(r"\s+", " ", search.lower()).strip()
 
     search_term, created = SearchTerm.objects.get_or_create(term=normalized_search_term)
+
+    # Add this line to update the last_search field
+    search_term.last_search = now()
+    search_term.save()
 
     if not created and (search_term.last_search > now() - timedelta(days=1)):
         # Don't search as it has been searched recently
@@ -61,7 +65,7 @@ def search_and_save(search):
 
     omdb_client = get_client_from_settings()
 
-    for omdb_movie in omdb_client.search(search):
+    for omdb_movie in omdb_client.search(normalized_search_term):
         logger.info("Saving movie: '%s' / '%s'", omdb_movie.title, omdb_movie.imdb_id)
         movie, created = Movie.objects.get_or_create(
             imdb_id=omdb_movie.imdb_id,

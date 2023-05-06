@@ -1,8 +1,9 @@
+import time
 from unittest.mock import patch, MagicMock
 from django.test import TestCase
 
-from ..models import Genre
-from ..omdb_integration import get_or_create_genres, fill_movie_details
+from ..models import Genre, SearchTerm, Movie
+from ..omdb_integration import get_or_create_genres, fill_movie_details, search_and_save
 from .factories import MovieFactory
 
 
@@ -104,3 +105,40 @@ class TestFillMovieDetails(TestCase):
         self.assertEqual(movie.runtime_minutes, 120)
         for genre in movie.genres.all():
             self.assertIn(genre.name, ["Action", "Sci-Fi"])
+
+
+class TestSearchAndSave(TestCase):
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_normalized_search_term(self, mock_get_client_from_settings):
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.search.return_value = []
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        search_term = "  TeSt   SEaRCh   TERM  "
+        expected_normalized_search_term = "test search term"
+
+        search_and_save(search_term)
+
+        self.assertTrue(
+            SearchTerm.objects.filter(term=expected_normalized_search_term).exists()
+        )
+        omdb_client_mock.search.assert_called_once_with(expected_normalized_search_term)
+
+    @patch("movienight.movies.omdb_integration.get_client_from_settings")
+    def test_update_search_term_last_searched(self, mock_get_client_from_settings):
+        omdb_client_mock = MagicMock()
+        omdb_client_mock.search.return_value = []
+        mock_get_client_from_settings.return_value = omdb_client_mock
+
+        search_term = SearchTerm.objects.create(term="test search term")
+        original_last_search = search_term.last_search
+
+        # ensure a time difference
+        time.sleep(1)
+
+        search_and_save(search_term.term)
+
+        # ensure the last_search was updated
+        search_term.refresh_from_db()
+
+        self.assertGreater(search_term.last_search, original_last_search)
