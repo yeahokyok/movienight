@@ -1,6 +1,14 @@
+from datetime import timedelta
 from django.test import TestCase
-from ..models import Movie
-from .factories import MovieFactory, GenreFactory
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from ..models import Movie, MovieNight
+from .factories import MovieFactory, GenreFactory, MovieNightFactory
+from movienight.accounts.tests.factories import UserFactory
+
+
+UserModel = get_user_model()
 
 
 class TestMovieModel(TestCase):
@@ -43,3 +51,38 @@ class TestMovieModel(TestCase):
         self.assertEqual(len(movies), 2)
         self.assertEqual(movies[0], movie1)
         self.assertEqual(movies[1], movie2)
+
+
+class TestMovieNight(TestCase):
+    def setUp(self):
+        self.user = UserFactory()
+        self.movie = MovieFactory(
+            imdb_id="tt0111161",
+            title="The Shawshank Redemption",
+            year=1994,
+            runtime_minutes=142,
+        )
+
+    def test_movie_night_end_time(self):
+        start_time = timezone.now()
+        movie_night = MovieNightFactory(
+            movie=self.movie, start_time=start_time, creator=self.user
+        )
+        expected_end_time = start_time + timedelta(minutes=self.movie.runtime_minutes)
+        self.assertEqual(movie_night.end_time, expected_end_time)
+
+    def test_movie_night_end_time_no_runtime(self):
+        self.movie.runtime_minutes = None
+        self.movie.save()
+        start_time = timezone.now()
+        movie_night = MovieNightFactory(
+            movie=self.movie, start_time=start_time, creator=self.user
+        )
+        self.assertIsNone(movie_night.end_time)
+
+    def test_movie_night_str_representation(self):
+        movie_night = MovieNightFactory(movie=self.movie, creator=self.user)
+        expected_str_representation = (
+            f"{self.movie.title} ({self.movie.year}) - {self.user.email}"
+        )
+        self.assertEqual(str(movie_night), expected_str_representation)

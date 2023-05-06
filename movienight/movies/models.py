@@ -1,4 +1,9 @@
+from datetime import timedelta
 from django.db import models
+from django.contrib.auth import get_user_model
+
+
+UserModel = get_user_model()
 
 
 class SearchTerm(models.Model):
@@ -36,3 +41,23 @@ class Movie(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.year})"
+
+
+class MovieNight(models.Model):
+    movie = models.ForeignKey(Movie, on_delete=models.PROTECT)
+    start_time = models.DateTimeField()
+    creator = models.ForeignKey(UserModel, on_delete=models.PROTECT)
+
+    class Meta:
+        ordering = ["creator", "start_time"]
+
+    @property
+    def end_time(self):
+        return (
+            self.start_time + timedelta(minutes=self.movie.runtime_minutes)
+            if self.movie.runtime_minutes
+            else None
+        )
+
+    def __str__(self):
+        return f"{self.movie.title} ({self.movie.year}) - {self.creator.email}"

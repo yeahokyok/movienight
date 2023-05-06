@@ -1,6 +1,8 @@
 import factory
+from django.utils import timezone
 
-from ..models import Genre, Movie
+from ..models import Genre, Movie, MovieNight
+from movienight.accounts.tests.factories import UserFactory
 
 
 class GenreFactory(factory.django.DjangoModelFactory):
@@ -20,3 +22,14 @@ class MovieFactory(factory.django.DjangoModelFactory):
     imdb_id = factory.Sequence(lambda n: f"tt{n}")
     plot = factory.Faker("text", max_nb_chars=200)
     is_full_record = factory.Faker("pybool")
+
+
+class MovieNightFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = MovieNight
+
+    movie = factory.SubFactory(MovieFactory)
+    start_time = factory.Faker(
+        "date_time_this_month", tzinfo=timezone.get_current_timezone()
+    )
+    creator = factory.SubFactory(UserFactory)
