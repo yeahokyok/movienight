@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ..models import Movie
-from .serializers import MovieSerializer, MovieSearchSerializer
+from ..models import Movie, MovieNight
+from .serializers import MovieNightSerializer, MovieSerializer, MovieSearchSerializer
 from ..omdb_integration import fill_movie_details, search_and_save
 
 
@@ -29,3 +29,8 @@ class MovieViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             MovieSerializer(movies, many=True, context={"request": request}).data
         )
+
+
+class MovieNightViewSet(viewsets.ModelViewSet):
+    queryset = MovieNight.objects.all()
+    serializer_class = MovieNightSerializer

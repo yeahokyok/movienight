@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from ..models import Movie
+from ..models import Movie, MovieNight
 
 
 class GenreField(serializers.SlugRelatedField):
@@ -21,3 +21,11 @@ class MovieSerializer(serializers.ModelSerializer):
 
 class MovieSearchSerializer(serializers.Serializer):
     term = serializers.CharField()
+
+
+class MovieNightSerializer(serializers.ModelSerializer):
+    movie = MovieSerializer()
+
+    class Meta:
+        model = MovieNight
+        fields = "__all__"
