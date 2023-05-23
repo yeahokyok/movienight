@@ -33,5 +33,7 @@ LOGGING = {
     },
 }
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 if "test" in sys.argv or "test_coverage" in sys.argv:
     LOGGING = {}

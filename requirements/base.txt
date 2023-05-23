@@ -7,3 +7,5 @@ markdown==3.4.3       # Markdown support for the browsable API.
 django==4.2
 djangorestframework==3.14.0
 django-filter==23.1
+dj-rest-auth==4.0.1
+django-allauth==0.54.0
