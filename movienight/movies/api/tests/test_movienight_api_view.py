@@ -35,6 +35,16 @@ class MovieNightViewSetTest(APITestCase):
             self.assertEqual(response.data[i]['creator']['last_name'], self.movie_nights[i].creator.last_name)
             self.assertEqual(len(response.data[i]['creator'].keys()), 3) 
             
+    def test_list_sorted_by_start_time(self):
+        url = f"{self.url}?ordering=start_time"
+        response = self.client.get(url)
+
+        start_times = [movie_night.start_time for movie_night in self.movie_nights]
+        sorted_start_times = sorted(start_times)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for i, movie_night_data in enumerate(response.data):
+            self.assertEqual(movie_night_data['start_time'], sorted_start_times[i].strftime('%Y-%m-%dT%H:%M:%SZ'))
   
 
 
