@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+
+from  movienight.accounts.api.serializers import UserSerializer
 from ..models import Movie, MovieNight
 
 
@@ -16,7 +18,7 @@ class MovieSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Movie
-        fields = "__all__"
+        fields = "genres", "id", "imdb_id", "plot", "runtime_minutes", "title", "year"
 
 
 class MovieSearchSerializer(serializers.Serializer):
@@ -25,7 +27,8 @@ class MovieSearchSerializer(serializers.Serializer):
 
 class MovieNightSerializer(serializers.ModelSerializer):
     movie = MovieSerializer()
+    creator = UserSerializer()
 
     class Meta:
         model = MovieNight
-        fields = "__all__"
+        fields = "id", "movie", "start_time", "creator"

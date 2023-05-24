@@ -23,7 +23,6 @@ class MovieFactory(factory.django.DjangoModelFactory):
     plot = factory.Faker("text", max_nb_chars=200)
     is_full_record = factory.Faker("pybool")
 
-
 class MovieNightFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = MovieNight
