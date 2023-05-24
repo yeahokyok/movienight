@@ -115,3 +115,10 @@ class MovieNightViewSetTest(APITestCase):
             self.movie_nights[0].creator.last_name,
         )
         self.assertEqual(len(response.data["creator"].keys()), 3)
+
+    def test_retrieve_nonexistent_movie_night(self):
+        non_existent_id = max(mn.id for mn in self.movie_nights) + 1
+        url = reverse("movienight-detail", args=[non_existent_id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
