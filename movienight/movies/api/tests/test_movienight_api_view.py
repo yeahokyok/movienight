@@ -163,7 +163,24 @@ class MovieNightViewSetTest(APITestCase):
         self.client.force_authenticate(self.user)
         response = self.client.post(self.url, data)
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Verify that no new MovieNight objects have been created
+        self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
+
+    def test_create_movie_night_with_past_start_time(self):
+        # Set the start time to a day in the past
+        past_start_time = timezone.now() - timezone.timedelta(days=1)
+
+        data = {
+            "movie": reverse("movie-detail", args=[self.movie_nights[0].movie.id]),
+            "start_time": past_start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Verify that no new MovieNight objects have been created
         self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
