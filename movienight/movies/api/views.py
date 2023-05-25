@@ -4,7 +4,12 @@ from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 
 from ..models import Movie, MovieNight
-from .serializers import MovieNightSerializer, MovieSerializer, MovieSearchSerializer
+from .serializers import (
+    MovieNightSerializer,
+    MovieSerializer,
+    MovieSearchSerializer,
+    MovieNightCreateSerializer,
+)
 from ..omdb_integration import fill_movie_details, search_and_save
 
 
@@ -36,4 +41,9 @@ class MovieNightViewSet(viewsets.ModelViewSet):
     queryset = MovieNight.objects.all()
     serializer_class = MovieNightSerializer
     filter_backends = [OrderingFilter]
-    ordering_fields = ['start_time']
+    ordering_fields = ["start_time"]
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return MovieNightCreateSerializer
+        return MovieNightSerializer

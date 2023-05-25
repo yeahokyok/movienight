@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 
-from  movienight.accounts.api.serializers import UserSerializer
+from movienight.accounts.api.serializers import UserSerializer
 from ..models import Movie, MovieNight
 
 
@@ -32,3 +32,15 @@ class MovieNightSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieNight
         fields = "id", "movie", "start_time", "creator"
+
+
+class MovieNightCreateSerializer(serializers.ModelSerializer):
+    movie = serializers.HyperlinkedRelatedField(
+        view_name="movie-detail", queryset=Movie.objects.all()
+    )
+    creator = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = MovieNight
+        fields = "id", "movie", "start_time", "creator"
+        read_only_fields = ("id",)

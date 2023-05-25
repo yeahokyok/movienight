@@ -1,6 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
+from django.utils import timezone
 
 from movienight.accounts.models import User
 from movienight.movies.models import Movie, MovieNight
@@ -122,3 +123,29 @@ class MovieNightViewSetTest(APITestCase):
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_movie_night(self):
+        user = User.objects.create_user(
+            email="test@example.com", password="testpassword"
+        )
+        movie = MovieFactory()
+        start_time = timezone.now() + timezone.timedelta(days=7)
+
+        data = {
+            "movie": reverse("movie-detail", args=[movie.id]),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+        self.client.force_authenticate(user)
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(MovieNight.objects.count(), len(self.movie_nights) + 1)
+        created_movie_night = MovieNight.objects.latest("id")
+        self.assertEqual(created_movie_night.movie, movie)
+        self.assertEqual(
+            created_movie_night.start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        )
+
+        self.assertEqual(created_movie_night.creator, user)
