@@ -18,6 +18,10 @@ class MovieNightViewSetTest(APITestCase):
         self.movie_nights = MovieNightFactory.create_batch(5)
         self.url = reverse("movienight-list")
 
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpassword"
+        )
+
     def test_list(self):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -125,9 +129,6 @@ class MovieNightViewSetTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_create_movie_night(self):
-        user = User.objects.create_user(
-            email="test@example.com", password="testpassword"
-        )
         movie = MovieFactory()
         start_time = timezone.now() + timezone.timedelta(days=7)
 
@@ -136,7 +137,7 @@ class MovieNightViewSetTest(APITestCase):
             "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
 
-        self.client.force_authenticate(user)
+        self.client.force_authenticate(self.user)
         response = self.client.post(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -148,4 +149,21 @@ class MovieNightViewSetTest(APITestCase):
             start_time.strftime("%Y-%m-%dT%H:%M:%S"),
         )
 
-        self.assertEqual(created_movie_night.creator, user)
+        self.assertEqual(created_movie_night.creator, self.user)
+
+    def test_create_movie_night_with_nonexistent_movie(self):
+        start_time = timezone.now() + timezone.timedelta(days=7)
+        nonexistent_movie_id = 99999  # not exist in database
+
+        data = {
+            "movie": reverse("movie-detail", args=[nonexistent_movie_id]),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Verify that no new MovieNight objects have been created
+        self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
