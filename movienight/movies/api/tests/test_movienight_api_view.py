@@ -215,3 +215,37 @@ class MovieNightViewSetTest(APITestCase):
         response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        # Verify that no new MovieNight objects have been created
+        self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
+
+
+class MovieNightUpdateTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpassword"
+        )
+        self.movie_night = MovieNightFactory(
+            start_time=timezone.now() + timezone.timedelta(days=7), creator=self.user
+        )
+        self.update_movie = Movie.objects.create(
+            title="test_movie_title", year=2021, runtime_minutes=120
+        )
+        self.client.force_authenticate(self.user)
+
+    def test_update_movie_night(self):
+        url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
+        start_time = timezone.now() + timezone.timedelta(days=7)
+        update_data = {
+            "id": self.movie_night.id,
+            "movie": reverse("movie-detail", args=[self.update_movie.id]),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+        response = self.client.put(url, update_data, format="json")
+
+        self.movie_night.refresh_from_db()
+        updated_start_time = self.movie_night.start_time
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            updated_start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        )

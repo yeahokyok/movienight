@@ -35,7 +35,7 @@ class MovieNightSerializer(serializers.ModelSerializer):
         fields = "id", "movie", "start_time", "creator"
 
 
-class MovieNightCreateSerializer(serializers.ModelSerializer):
+class MovieNightWriteSerializer(serializers.ModelSerializer):
     movie = serializers.HyperlinkedRelatedField(
         view_name="movie-detail", queryset=Movie.objects.all()
     )

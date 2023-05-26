@@ -9,7 +9,7 @@ from .serializers import (
     MovieNightSerializer,
     MovieSerializer,
     MovieSearchSerializer,
-    MovieNightCreateSerializer,
+    MovieNightWriteSerializer,
 )
 from ..omdb_integration import fill_movie_details, search_and_save
 
@@ -46,6 +46,6 @@ class MovieNightViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_serializer_class(self):
-        if self.request.method == "POST":
-            return MovieNightCreateSerializer
+        if self.request.method in ["POST", "PUT"]:
+            return MovieNightWriteSerializer
         return MovieNightSerializer
