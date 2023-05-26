@@ -249,6 +249,13 @@ class MovieNightUpdateAPITests(APITestCase):
         )
         self.client.force_authenticate(self.user)
 
+        start_time = timezone.now() + timezone.timedelta(days=7)
+        self.update_data = {
+            "id": self.movie_night.id,
+            "movie": reverse("movie-detail", args=[self.update_movie.id]),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
     def test_update_movie_night(self):
         url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
         start_time = timezone.now() + timezone.timedelta(days=7)
@@ -266,3 +273,28 @@ class MovieNightUpdateAPITests(APITestCase):
             updated_start_time.strftime("%Y-%m-%dT%H:%M:%S"),
             start_time.strftime("%Y-%m-%dT%H:%M:%S"),
         )
+
+    def test_update_unauthorized_user(self):
+        url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
+
+        self.client.logout()
+        response = self.client.put(url, self.update_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_non_existent_id(self):
+        url = reverse("movienight-detail", kwargs={"pk": 9999})
+        response = self.client.put(url, self.update_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_user_not_creator(self):
+        new_user = User.objects.create_user(
+            email="other@example.com", password="testpassword"
+        )
+        self.client.force_authenticate(user=new_user)
+
+        url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
+        response = self.client.put(url, self.update_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

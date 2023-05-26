@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 
 from ..models import Movie, MovieNight
 from .serializers import (
@@ -49,3 +50,8 @@ class MovieNightViewSet(viewsets.ModelViewSet):
         if self.request.method in ["POST", "PUT"]:
             return MovieNightWriteSerializer
         return MovieNightSerializer
+
+    def perform_update(self, serializer):
+        if self.request.user != serializer.instance.creator:
+            raise PermissionDenied()
+        serializer.save()
