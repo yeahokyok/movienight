@@ -249,22 +249,18 @@ class MovieNightUpdateAPITests(APITestCase):
         )
         self.client.force_authenticate(self.user)
 
-        start_time = timezone.now() + timezone.timedelta(days=7)
+        self.start_time = timezone.now() + timezone.timedelta(days=7)
         self.update_data = {
             "id": self.movie_night.id,
             "movie": reverse("movie-detail", args=[self.update_movie.id]),
-            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "start_time": self.start_time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
 
     def test_update_movie_night(self):
         url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
         start_time = timezone.now() + timezone.timedelta(days=7)
-        update_data = {
-            "id": self.movie_night.id,
-            "movie": reverse("movie-detail", args=[self.update_movie.id]),
-            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
-        }
-        response = self.client.put(url, update_data, format="json")
+
+        response = self.client.put(url, self.update_data, format="json")
 
         self.movie_night.refresh_from_db()
         updated_start_time = self.movie_night.start_time
@@ -329,3 +325,17 @@ class MovieNightUpdateAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("start_time", response.data)
+
+    def test_update_non_existent_movie(self):
+        non_existent_movie_url = reverse("movie-detail", kwargs={"pk": 9999})
+        invalid_data = {
+            "movie": non_existent_movie_url,
+            "id": self.movie_night.id,
+            "start_time": self.start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+        url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
+        response = self.client.put(url, invalid_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("movie", response.data)
