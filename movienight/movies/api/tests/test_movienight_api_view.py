@@ -7,13 +7,11 @@ from movienight.accounts.models import User
 from movienight.movies.models import Movie, MovieNight
 from movienight.movies.tests.factories import (
     MovieFactory,
-    GenreFactory,
     MovieNightFactory,
 )
-from movienight.movies.api.serializers import MovieNightSerializer
 
 
-class MovieNightViewSetTest(APITestCase):
+class MovieNightListAPITest(APITestCase):
     def setUp(self):
         self.movie_nights = MovieNightFactory.create_batch(5)
 
@@ -89,61 +87,14 @@ class MovieNightViewSetTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_retrieve(self):
-        url = reverse("movienight-detail", args=[self.movie_nights[0].id])
-        response = self.client.get(url)
 
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], self.movie_nights[0].id)
-        self.assertEqual(response.data["movie"]["id"], self.movie_nights[0].movie.id)
-        self.assertEqual(
-            response.data["movie"]["title"], self.movie_nights[0].movie.title
+class MovieNightCreateAPITest(APITestCase):
+    def setUp(self):
+        self.movie_nights = MovieNightFactory.create_batch(5)
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpassword"
         )
-        self.assertEqual(
-            response.data["movie"]["imdb_id"], self.movie_nights[0].movie.imdb_id
-        )
-        self.assertEqual(
-            response.data["movie"]["year"], self.movie_nights[0].movie.year
-        )
-        self.assertEqual(
-            response.data["movie"]["runtime_minutes"],
-            self.movie_nights[0].movie.runtime_minutes,
-        )
-        self.assertEqual(
-            response.data["movie"]["plot"], self.movie_nights[0].movie.plot
-        )
-        self.assertEqual(len(response.data["movie"].keys()), 7)
-        self.assertEqual(
-            response.data["start_time"],
-            self.movie_nights[0].start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        )
-        self.assertEqual(
-            response.data["creator"]["email"], self.movie_nights[0].creator.email
-        )
-        self.assertEqual(
-            response.data["creator"]["first_name"],
-            self.movie_nights[0].creator.first_name,
-        )
-        self.assertEqual(
-            response.data["creator"]["last_name"],
-            self.movie_nights[0].creator.last_name,
-        )
-        self.assertEqual(len(response.data["creator"].keys()), 3)
-
-    def test_retrieve_nonexistent_movie_night(self):
-        non_existent_id = max(mn.id for mn in self.movie_nights) + 1
-        url = reverse("movienight-detail", args=[non_existent_id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
-    def test_retrieve_movie_night_unauthenticated(self):
-        url = reverse("movienight-detail", args=[self.movie_nights[0].id])
-
-        self.client.logout()  # Unauthenticate the client
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.client.force_authenticate(self.user)
 
     def test_create_movie_night(self):
         url = reverse("movienight-list")
@@ -219,7 +170,73 @@ class MovieNightViewSetTest(APITestCase):
         self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
 
 
-class MovieNightUpdateTests(APITestCase):
+class MovieNightRetrieveAPITest(APITestCase):
+    def setUp(self):
+        self.movie_nights = MovieNightFactory.create_batch(5)
+
+        self.user = User.objects.create_user(
+            email="test@example.com", password="testpassword"
+        )
+        self.client.force_authenticate(self.user)
+
+    def test_retrieve(self):
+        url = reverse("movienight-detail", args=[self.movie_nights[0].id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], self.movie_nights[0].id)
+        self.assertEqual(response.data["movie"]["id"], self.movie_nights[0].movie.id)
+        self.assertEqual(
+            response.data["movie"]["title"], self.movie_nights[0].movie.title
+        )
+        self.assertEqual(
+            response.data["movie"]["imdb_id"], self.movie_nights[0].movie.imdb_id
+        )
+        self.assertEqual(
+            response.data["movie"]["year"], self.movie_nights[0].movie.year
+        )
+        self.assertEqual(
+            response.data["movie"]["runtime_minutes"],
+            self.movie_nights[0].movie.runtime_minutes,
+        )
+        self.assertEqual(
+            response.data["movie"]["plot"], self.movie_nights[0].movie.plot
+        )
+        self.assertEqual(len(response.data["movie"].keys()), 7)
+        self.assertEqual(
+            response.data["start_time"],
+            self.movie_nights[0].start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+        self.assertEqual(
+            response.data["creator"]["email"], self.movie_nights[0].creator.email
+        )
+        self.assertEqual(
+            response.data["creator"]["first_name"],
+            self.movie_nights[0].creator.first_name,
+        )
+        self.assertEqual(
+            response.data["creator"]["last_name"],
+            self.movie_nights[0].creator.last_name,
+        )
+        self.assertEqual(len(response.data["creator"].keys()), 3)
+
+    def test_retrieve_nonexistent_movie_night(self):
+        non_existent_id = max(mn.id for mn in self.movie_nights) + 1
+        url = reverse("movienight-detail", args=[non_existent_id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_retrieve_movie_night_unauthenticated(self):
+        url = reverse("movienight-detail", args=[self.movie_nights[0].id])
+
+        self.client.logout()  # Unauthenticate the client
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class MovieNightUpdateAPITests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             email="test@example.com", password="testpassword"
