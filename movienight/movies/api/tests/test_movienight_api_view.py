@@ -16,14 +16,15 @@ from movienight.movies.api.serializers import MovieNightSerializer
 class MovieNightViewSetTest(APITestCase):
     def setUp(self):
         self.movie_nights = MovieNightFactory.create_batch(5)
-        self.url = reverse("movienight-list")
 
         self.user = User.objects.create_user(
             email="test@example.com", password="testpassword"
         )
+        self.client.force_authenticate(self.user)
 
     def test_list(self):
-        response = self.client.get(self.url)
+        url = reverse("movienight-list")
+        response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), len(self.movie_nights))
         for i in range(len(self.movie_nights)):
@@ -67,7 +68,8 @@ class MovieNightViewSetTest(APITestCase):
             self.assertEqual(len(response.data[i]["creator"].keys()), 3)
 
     def test_list_sorted_by_start_time(self):
-        url = f"{self.url}?ordering=start_time"
+        url = f"{reverse('movienight-list')}?ordering=start_time"
+
         response = self.client.get(url)
 
         start_times = [movie_night.start_time for movie_night in self.movie_nights]
@@ -79,6 +81,13 @@ class MovieNightViewSetTest(APITestCase):
                 movie_night_data["start_time"],
                 sorted_start_times[i].strftime("%Y-%m-%dT%H:%M:%SZ"),
             )
+
+    def test_list_movie_night_unauthenticated(self):
+        url = reverse("movienight-list")
+        self.client.logout()  # Unauthenticate the client
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_retrieve(self):
         url = reverse("movienight-detail", args=[self.movie_nights[0].id])
@@ -128,7 +137,16 @@ class MovieNightViewSetTest(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test_retrieve_movie_night_unauthenticated(self):
+        url = reverse("movienight-detail", args=[self.movie_nights[0].id])
+
+        self.client.logout()  # Unauthenticate the client
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_create_movie_night(self):
+        url = reverse("movienight-list")
         movie = MovieFactory()
         start_time = timezone.now() + timezone.timedelta(days=7)
 
@@ -137,8 +155,7 @@ class MovieNightViewSetTest(APITestCase):
             "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
         }
 
-        self.client.force_authenticate(self.user)
-        response = self.client.post(self.url, data)
+        response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(MovieNight.objects.count(), len(self.movie_nights) + 1)
@@ -152,6 +169,7 @@ class MovieNightViewSetTest(APITestCase):
         self.assertEqual(created_movie_night.creator, self.user)
 
     def test_create_movie_night_with_nonexistent_movie(self):
+        url = reverse("movienight-list")
         start_time = timezone.now() + timezone.timedelta(days=7)
         nonexistent_movie_id = 99999  # not exist in database
 
@@ -160,8 +178,7 @@ class MovieNightViewSetTest(APITestCase):
             "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
 
-        self.client.force_authenticate(self.user)
-        response = self.client.post(self.url, data)
+        response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -169,6 +186,7 @@ class MovieNightViewSetTest(APITestCase):
         self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
 
     def test_create_movie_night_with_past_start_time(self):
+        url = reverse("movienight-list")
         # Set the start time to a day in the past
         past_start_time = timezone.now() - timezone.timedelta(days=1)
 
@@ -177,10 +195,23 @@ class MovieNightViewSetTest(APITestCase):
             "start_time": past_start_time.strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
 
-        self.client.force_authenticate(self.user)
-        response = self.client.post(self.url, data)
+        response = self.client.post(url, data)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         # Verify that no new MovieNight objects have been created
         self.assertEqual(MovieNight.objects.count(), len(self.movie_nights))
+
+    def test_create_movie_night_unauthenticated(self):
+        url = reverse("movienight-list")
+        start_time = timezone.now() + timezone.timedelta(days=7)
+
+        data = {
+            "movie": reverse("movie-detail", args=[self.movie_nights[0].movie.id]),
+            "start_time": start_time.strftime("%Y-%m-%dT%H:%M:%S"),
+        }
+
+        self.client.logout()  # Unauthenticate the client
+        response = self.client.post(url, data)
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
