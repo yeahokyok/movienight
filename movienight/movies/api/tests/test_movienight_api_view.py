@@ -298,3 +298,15 @@ class MovieNightUpdateAPITests(APITestCase):
         response = self.client.put(url, self.update_data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_update_past_start_time(self):
+        past_time = (timezone.now() - timezone.timedelta(days=7)).strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        )
+        invalid_data = {"start_time": past_time}
+
+        url = reverse("movienight-detail", kwargs={"pk": self.movie_night.id})
+        response = self.client.put(url, invalid_data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("start_time", response.data)
